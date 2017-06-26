@@ -11,35 +11,38 @@ var connection = mysql.createConnection({
 
 connection.connect(function (err) {
     if (err) throw err;
+    menu()
 });
 
 
-inquirer.prompt([
-    {
-        type: "rawlist",
-        message: "Please choose the product you would like to buy:",
-        name: "choice",
-        choices: ["View Products for Sale", "View Low Inventory", "Add to Inventory", "Add New Product"]
-    }
-]).then(function(answer) {
-    switch(answer.choice) {
-        case "View Products for Sale":
-            productSale();
-        break;
+function menu () {
+    inquirer.prompt([
+        {
+            type: "rawlist",
+            message: "Please choose the product you would like to buy:",
+            name: "choice",
+            choices: ["View Products for Sale", "View Low Inventory", "Add to Inventory", "Add New Product"]
+        }
+    ]).then(function(answer) {
+        switch(answer.choice) {
+            case "View Products for Sale":
+                productSale();
+            break;
 
-        case "View Low Inventory":
-            lowInventory();
-        break;
+            case "View Low Inventory":
+                lowInventory();
+            break;
 
-        case "Add to Inventory":
-            addInventory();
-        break;
+            case "Add to Inventory":
+                addInventory();
+            break;
 
-        case "Add New Product":
-            newProduct();
-        break;
-    }
-});
+            case "Add New Product":
+                newProduct();
+            break;
+        }
+    });
+}
 
 function productSale () {
     console.log("nice, viewing products for sale");
@@ -52,6 +55,7 @@ function productSale () {
                 "Price:", "'", row.price, "'",
                 "Quantity:", "'", row.stock_quantity, "'")
             });
+        menu()
     });
 }
 
@@ -60,6 +64,7 @@ function lowInventory () {
         if (err)
             throw err;
         console.log(results)
+        menu()
     })
 }
 
@@ -80,30 +85,62 @@ function addInventory () {
                 return choiceArray;
             }
         }
-    ]).then(function(answer){
-        var addedItem;
-        for (var i = 0; i < results.length; i++) {
-            if (results[i].item_name === answer.choice) {
-                addedItem = results[i];
-            }
-        }
-        connection.query(
-            "UPDATE auctions SET ? WHERE ?",
-            [
-                {
-                    stock_quantity: stock_quantity++
-                }
-            ],
-            function(error) {
-                if (error) throw err;
-                console.log("Order successful!");
-                start();
-            }
-        );
-    })
+        ]).then(function(answer){
+            results.stock_quantity++
+            menu()
+        });
     })
 }
 
 function newProduct() {
     console.log("nice, adding new product");
+
+    inquirer.prompt([
+        {
+            type: "input",
+            name: "id",
+            message: "Please add the id of the item you would like to add"
+        },
+        {
+            type: "input",
+            name: "name",
+            message: "Please add the name of the item you would like to add"
+        },
+        {
+            type: "input",
+            name: "department",
+            message: "Please add the department name of the item you would like to add"
+        },
+        {
+            type: "input",
+            name: "price",
+            message: "Please add the price of the item you would like to add"
+        },
+        {
+            type: "input",
+            name: "quantity",
+            message: "Please add the stock quantity of the item you would like to add"
+        },
+        {
+            type: "input",
+            name: "autographed",
+            message: "Is this product autographed?"
+        }
+    ]).then(function (answer) {
+        var id = answer.id;
+        var name = answer.name;
+        var department = answer.department;
+        var price = answer.price;
+        var quantity = answer.quantity;
+        var autographed = answer.autographed;
+
+        connection.query("INSERT INTO `products` (`id`, `name`, `department`, `price`, `quantity`, `autographed`) VALUES (?, ?, ?, ?, ?, ?)", [id, name, department, price, quantity, autographed], function(err, data) {
+
+            if (err) {
+                throw err
+            }
+            console.log("Successfully added item!")
+        });
+
+    })
 }
