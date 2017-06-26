@@ -76,7 +76,7 @@ function chooseProduct() {
                 }
             }
 
-            if (chosenItem.stock_quantity < parseInt(answer.quantity)) {
+            if (results.stock_quantity < parseInt(answer.quantity)) {
                 connection.query(
                     "UPDATE products SET ? WHERE ?",
                     [
