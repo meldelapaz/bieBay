@@ -22,38 +22,86 @@ inquirer.prompt([
         choices: ["View Products for Sale", "View Low Inventory", "Add to Inventory", "Add New Product"]
     }
 ]).then(function(answer) {
-    if (answer[0]) {
-        productSale()
-    } else if (answer[1]) {
-        lowInventory()
-    } else if (answer[3]) {
-        addInventory ()
-    } else if (answer[4]) {
-        newProduct()
+    switch(answer.choice) {
+        case "View Products for Sale":
+            productSale();
+        break;
+
+        case "View Low Inventory":
+            lowInventory();
+        break;
+
+        case "Add to Inventory":
+            addInventory();
+        break;
+
+        case "Add New Product":
+            newProduct();
+        break;
     }
-    //else if inquirer.choices[1]
 });
 
 function productSale () {
     console.log("nice, viewing products for sale");
-    // connection.query("SELECT * FROM `products`" , function (queryError, response){
-    //     if (queryError)
-    //         throw queryError;
-    //         response.forEach(function (row) {
-    //             console.log("id = ", "'", row.id, "'",
-    //             "Product Name = ", "'", row.product_name, "'",
-    //             "Price:", "'", row.price, "'",
-    //             "Quantity:", "'", row.stock_quantity, "'")
-    //         });
-    // });
+    connection.query("SELECT * FROM `products`" , function (queryError, response){
+        if (queryError)
+            throw queryError;
+            response.forEach(function (row) {
+                console.log("id = ", "'", row.id, "'",
+                "Product Name = ", "'", row.product_name, "'",
+                "Price:", "'", row.price, "'",
+                "Quantity:", "'", row.stock_quantity, "'")
+            });
+    });
 }
 
 function lowInventory () {
-    console.log("nice, viewing low inventory");
+    connection.query("SELECT `product_name`, `stock_quantity` FROM `products` WHERE `stock_quantity`< 5 ORDER BY `stock_quantity` DESC;", function(err, results) {
+        if (err)
+            throw err;
+        console.log(results)
+    })
 }
 
 function addInventory () {
-    console.log("nice, adding inventory");
+    connection.query("SELECT * FROM products", function(err, results) {
+        if (err) throw err;
+
+    inquirer.prompt([
+        {
+            type: "rawlist",
+            message: "Add more of any of the following products:",
+            name: "choice",
+            choices: function() {
+                var choiceArray = [];
+                for (var i = 0; i < results.length; i++) {
+                    choiceArray.push(results[i].product_name);
+                }
+                return choiceArray;
+            }
+        }
+    ]).then(function(answer){
+        var addedItem;
+        for (var i = 0; i < results.length; i++) {
+            if (results[i].item_name === answer.choice) {
+                addedItem = results[i];
+            }
+        }
+        connection.query(
+            "UPDATE auctions SET ? WHERE ?",
+            [
+                {
+                    stock_quantity: stock_quantity++
+                }
+            ],
+            function(error) {
+                if (error) throw err;
+                console.log("Order successful!");
+                start();
+            }
+        );
+    })
+    })
 }
 
 function newProduct() {
